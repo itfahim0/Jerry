@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "deploy": "node scripts/deploy-commands.js"
+    "deploy": "node scripts/deploy-commands.js",
+    "start:pm2": "pm2 start ecosystem.config.js"
   },
   "keywords": [
     "discord",
