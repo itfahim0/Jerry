@@ -1,4 +1,4 @@
-const { Events } = require('discord.js');
+const { Events, EmbedBuilder, ChannelType } = require('discord.js');
 const { getChatResponse } = require('../openaiClient');
 const knowledgeBase = require('../services/knowledgeBase');
 const { getSession, addMessageToSession } = require('../utils/sessionMemory');
@@ -12,7 +12,10 @@ module.exports = {
         const isMentioned = message.mentions.users.has(message.client.user.id);
         const isDM = !message.guild;
 
-        if (isMentioned || isDM) {
+        // Auto-Interjection Logic (5% chance)
+        const shouldInterject = !isMentioned && !isDM && Math.random() < 0.05;
+
+        if (isMentioned || isDM || shouldInterject) {
             try {
                 await message.channel.sendTyping();
 
@@ -20,45 +23,82 @@ module.exports = {
                 const userId = message.author.id;
                 const lowerMessage = userMessage.toLowerCase();
 
-                // --- 1. Invite Link Logic ---
-                const inviteKeywords = ['invite link', 'server link', 'link dao', 'link den', 'invite koro'];
-                if (inviteKeywords.some(keyword => lowerMessage.includes(keyword))) {
-                    let invite;
-                    if (message.guild) {
-                        invite = await message.channel.createInvite({ maxAge: 0, maxUses: 0 }); // Never expires
-                    } else {
-                        // In DM, we can't create an invite to the DM channel. 
-                        // We would need a specific server ID to create an invite for.
-                        // For now, let's assume we want to invite to the main server if configured, 
-                        // or ask the user to ask in a server channel.
-                        // Ideally, fetch a default channel from config.
-                        return message.reply("Please ask this in the server channel so I can generate a link for you, or configure a default server ID.");
-                    }
+                // --- 1. Invite Link Logic (Only if explicitly mentioned or DM) ---
+                if (isMentioned || isDM) {
+                    const inviteKeywords = ['invite link', 'server link', 'link dao', 'link den', 'invite koro'];
+                    if (inviteKeywords.some(keyword => lowerMessage.includes(keyword))) {
+                        let invite;
+                        if (message.guild) {
+                            invite = await message.channel.createInvite({ maxAge: 0, maxUses: 0 }); // Never expires
+                        } else {
+                            return message.reply("Please ask this in the server channel so I can generate a link for you.");
+                        }
 
-                    if (invite) {
-                        return message.reply(`Here is your invite link: ${invite.url}`);
+                        if (invite) {
+                            const embed = new EmbedBuilder()
+                                .setColor(0x0099FF)
+                                .setTitle('Server Invite Link')
+                                .setDescription(`Here is your permanent invite link:\n${invite.url}`)
+                                .setFooter({ text: 'Share this with your friends!' });
+
+                            return message.reply({ embeds: [embed] });
+                        }
                     }
                 }
 
                 // --- 2. RAG & Chat Logic ---
 
                 // Search knowledge base (RAG)
-                const contextResults = await knowledgeBase.search(userMessage);
+                // Only search if mentioned or DM, or if interjecting and message is long enough
                 let contextText = "";
-
-                if (contextResults.length > 0) {
-                    contextText = contextResults.map(r => r.text).join("\n\n");
-                    console.log(`Found ${contextResults.length} relevant context chunks.`);
+                if (isMentioned || isDM || userMessage.length > 10) {
+                    const contextResults = await knowledgeBase.search(userMessage);
+                    if (contextResults.length > 0) {
+                        contextText = contextResults.map(r => r.text).join("\n\n");
+                        console.log(`Found ${contextResults.length} relevant context chunks.`);
+                        // console.log("Context Preview:", contextText.substring(0, 200)); // Debugging
+                    } else {
+                        console.log("No relevant context found.");
+                    }
                 }
 
+
                 // Retrieve conversation history
-                const history = getSession(userId);
+                let history = getSession(userId);
+
+                // If interjecting, fetch recent channel messages for context
+                let recentContext = [];
+                if (shouldInterject && message.channel) {
+                    const recentMessages = await message.channel.messages.fetch({ limit: 5 });
+                    recentContext = recentMessages.reverse().map(m => {
+                        return { role: m.author.id === message.client.user.id ? "assistant" : "user", content: `${m.author.username}: ${m.content}` };
+                    });
+                    // Use recent context instead of personal session history for interjections
+                    history = recentContext;
+                }
 
                 // Construct message payload
                 const messages = [];
 
                 // System Prompt Configuration
-                let systemContent = "You are Jerry, a friendly Bengali-speaking AI assistant.";
+                let systemContent = "You are Jerry, a friendly Bengali-speaking AI assistant for the 'Purrfect Universe' community.";
+
+                // --- Smart Mentions Context ---
+                if (message.guild) {
+                    const channels = message.guild.channels.cache
+                        .filter(c => c.type === ChannelType.GuildText)
+                        .map(c => `${c.name} (ID: ${c.id})`)
+                        .slice(0, 20) // Limit to avoid token overflow
+                        .join(", ");
+
+                    const roles = message.guild.roles.cache
+                        .map(r => `${r.name} (ID: ${r.id})`)
+                        .slice(0, 20)
+                        .join(", ");
+
+                    systemContent += `\n\nServer Structure:\nChannels: ${channels}\nRoles: ${roles}\n`;
+                    systemContent += "To mention a channel, use <#channelID>. To mention a role, use <@&roleID>. Use these IDs when referring to specific channels or roles.\n";
+                }
 
                 // Check for "detailed" request
                 const detailedKeywords = ['full details', 'bistarito', 'details dao', 'sob kichu'];
@@ -66,15 +106,24 @@ module.exports = {
 
                 if (contextText) {
                     systemContent += `\n\nContext information is below.\n---------------------\n${contextText}\n---------------------\n`;
-                    systemContent += "Given the context information and not prior knowledge, answer the query.";
+                    systemContent += "Instructions:\n";
+                    systemContent += "1. Use ONLY the provided context to answer the query. Do not hallucinate or make up facts.\n";
+                    systemContent += "2. If the answer is not in the context, politely say you don't know or don't have that information.\n";
 
                     if (isDetailed) {
-                        systemContent += " Provide a comprehensive and detailed answer.";
+                        systemContent += "3. Provide a comprehensive and detailed answer based on the context.\n";
                     } else {
-                        systemContent += " Keep your answer short and concise (2-3 sentences) unless the user explicitly asks for details.";
+                        systemContent += "3. Keep your answer short and concise (2-3 sentences) unless the user explicitly asks for details.\n";
                     }
 
-                    systemContent += " Answer in the same language as the user (Bengali or English). If the user asks for a link, provide the URL from the context.";
+                    systemContent += "4. Answer in the same language as the user (Bengali or English).\n";
+                    systemContent += "5. If the user asks for a specific link (e.g. website), provide the URL exactly as shown in the context.\n";
+                } else {
+                    systemContent += "\nI do not have specific context for this query. Answer generally if it's casual chat, but if asked about the server, say I don't have that info right now.";
+                }
+
+                if (shouldInterject) {
+                    systemContent += "\nYou are interjecting in a conversation. Be helpful, funny, or insightful. Don't be annoying. Keep it brief.";
                 }
 
                 messages.push({ role: "system", content: systemContent });
@@ -82,29 +131,52 @@ module.exports = {
                 // Append History
                 messages.push(...history);
 
-                // Append Current Message
-                messages.push({ role: "user", content: userMessage });
+                // Append Current Message (if not already in recentContext)
+                if (!shouldInterject) {
+                    messages.push({ role: "user", content: userMessage });
+                }
 
                 // Get Response
                 const response = await getChatResponse(messages);
 
-                // Save to History
-                addMessageToSession(userId, { role: "user", content: userMessage });
-                addMessageToSession(userId, { role: "assistant", content: response });
+                // Save to History (only for direct interactions)
+                if (!shouldInterject) {
+                    addMessageToSession(userId, { role: "user", content: userMessage });
+                    addMessageToSession(userId, { role: "assistant", content: response });
+                }
 
-                // Send Response
-                if (response.length > 2000) {
-                    const chunks = response.match(/[\s\S]{1,2000}/g) || [];
-                    for (const chunk of chunks) {
-                        await message.reply(chunk);
-                    }
+                // --- 3. Send Response (with Embed detection) ---
+
+                // Check if response contains a URL and user asked for a link
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const urls = response.match(urlRegex);
+                const linkKeywords = ['link', 'website', 'url'];
+                const askedForLink = linkKeywords.some(k => lowerMessage.includes(k));
+
+                if (urls && askedForLink) {
+                    const embed = new EmbedBuilder()
+                        .setColor(0x0099FF)
+                        .setDescription(response);
+
+                    await message.reply({ embeds: [embed] });
                 } else {
-                    await message.reply(response);
+                    // Standard text response (split if too long)
+                    if (response.length > 2000) {
+                        const chunks = response.match(/[\s\S]{1,2000}/g) || [];
+                        for (const chunk of chunks) {
+                            await message.reply(chunk);
+                        }
+                    } else {
+                        await message.reply(response);
+                    }
                 }
 
             } catch (error) {
                 console.error("Error handling message:", error);
-                await message.reply("দুঃখিত, একটি সমস্যা হয়েছে।");
+                // Don't reply with error if interjecting, just fail silently
+                if (!shouldInterject) {
+                    await message.reply("দুঃখিত, একটি সমস্যা হয়েছে।");
+                }
             }
         }
     },
