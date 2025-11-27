@@ -34,5 +34,30 @@ Jerry is a Discord bot designed to be a friendly, Bengali-speaking companion. He
   - `commands/`: Slash commands
   - `events/`: Event handlers
   - `utils/`: Utility functions
+  - `services/`: RAG and logic services
+- `documents/`: Knowledge base files (PDF, DOCX, TXT, MD)
 - `config/`: Configuration files
 - `scripts/`: Deployment scripts
+
+## New Features (RAG & Utilities)
+
+- **Knowledge Base**: Jerry learns from files in the `documents/` folder.
+- **Smart Answers**: 
+  - Ask "Tell me about the server" for a concise summary.
+  - Ask "Tell me full details" for a comprehensive explanation.
+- **Invite Links**: Ask "invite link", "link dao", or "server link" to get a permanent invite.
+- **Link Retrieval**: Ask for specific website links (e.g., "Purrfect Universe link") to get them from `documents/links.md`.
+
+## Production Deployment (PM2)
+
+To run the bot continuously in production:
+
+```bash
+npm run start:pm2
+```
+
+Useful PM2 commands:
+- `pm2 status`: Check bot status
+- `pm2 logs jerry-bot`: View logs
+- `pm2 restart jerry-bot`: Restart the bot
+

@@ -42,4 +42,11 @@ for (const file of eventFiles) {
     }
 }
 
+const { ingestAll } = require('./services/documentIngestion');
+
+client.once('ready', () => {
+    console.log(`Logged in as ${client.user.tag}!`);
+    ingestAll();
+});
+
 client.login(process.env.DISCORD_TOKEN);

@@ -15,7 +15,7 @@ async function parseFile(filePath) {
         } else if (extension === 'docx') {
             const result = await mammoth.extractRawText({ path: filePath });
             return result.value;
-        } else if (extension === 'txt') {
+        } else if (extension === 'txt' || extension === 'md') {
             return fs.readFileSync(filePath, 'utf8');
         } else {
             console.warn(`Unsupported file type: ${extension}`);
