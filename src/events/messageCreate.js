@@ -1,6 +1,7 @@
 const { Events } = require('discord.js');
 const { getChatResponse } = require('../openaiClient');
 const knowledgeBase = require('../services/knowledgeBase');
+const { getSession, addMessageToSession } = require('../utils/sessionMemory');
 
 module.exports = {
     name: Events.MessageCreate,
@@ -16,8 +17,9 @@ module.exports = {
                 await message.channel.sendTyping();
 
                 const userMessage = message.content.replace(/<@!?[0-9]+>/g, '').trim();
+                const userId = message.author.id;
 
-                // Search knowledge base
+                // 1. Search knowledge base (RAG)
                 const contextResults = await knowledgeBase.search(userMessage);
                 let contextText = "";
 
@@ -26,21 +28,33 @@ module.exports = {
                     console.log(`Found ${contextResults.length} relevant context chunks.`);
                 }
 
-                // Construct message history
+                // 2. Retrieve conversation history
+                const history = getSession(userId);
+
+                // 3. Construct message payload
                 const messages = [];
 
+                // System Prompt + RAG Context
+                let systemContent = "You are Jerry, a friendly Bengali-speaking AI assistant.";
                 if (contextText) {
-                    messages.push({
-                        role: "system",
-                        content: `Context information is below.\n---------------------\n${contextText}\n---------------------\nGiven the context information and not prior knowledge, answer the query.`
-                    });
+                    systemContent += `\n\nContext information is below.\n---------------------\n${contextText}\n---------------------\nGiven the context information and not prior knowledge, answer the query.`;
                 }
+                messages.push({ role: "system", content: systemContent });
 
+                // Append History
+                messages.push(...history);
+
+                // Append Current Message
                 messages.push({ role: "user", content: userMessage });
 
+                // 4. Get Response
                 const response = await getChatResponse(messages);
 
-                // Split long messages if necessary (Discord limit is 2000 chars)
+                // 5. Save to History
+                addMessageToSession(userId, { role: "user", content: userMessage });
+                addMessageToSession(userId, { role: "assistant", content: response });
+
+                // 6. Send Response
                 if (response.length > 2000) {
                     const chunks = response.match(/[\s\S]{1,2000}/g) || [];
                     for (const chunk of chunks) {
