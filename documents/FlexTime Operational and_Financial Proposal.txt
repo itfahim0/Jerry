@@ -1,0 +1,267 @@
+Tab 1
+Motion Mechanics
+FlexTime Operational and Financial Proposal   
+Version 2.2 ()
+Web Companion Microsite:  
+Github Repository:  
+
+Ideas and concepts: 
+Compilation: 
+AI Tools Used: ChatGPT 5.1, Gemini Pro Workspace, GitHub Copilot (Agent, Models: gpt-5-mini, claude-sonnet-4.5)
+
+Reviewers: 
+Approvers: 
+
+[Add your name, email, date of review/approval and status in the following table once reviewed, leave feedback inline with Google Docs Comments]
+
+
+
+
+1. Executive Summary
+FlexTime is Motion Mechanics’ adaptive operational model designed to align physiotherapy service delivery with real-world patient availability, therapist well-being, and financial sustainability.
+The framework:
+Optimizes daily shift structure around Dhaka and Savar traffic patterns
+
+Supports continuous physiotherapy coverage with structured breaks
+
+Scales staffing gradually using well-defined tiers
+
+Enables rapid forecasting through a companion interactive microsite
+
+Ensures high clinical quality and economic viability from day one
+
+This document presents the core FlexTime design, staffing model, and high-level financial expectations.
+
+2. FlexTime Daily Structure
+2.1 Overview of Daily Blocks
+FlexStart — 09:00 to 10:00
+ Preparation, team sync, emergencies, light assessments.
+FlexShift A — 10:00 to 13:00
+ High clinical complexity. Neuro and Foundation sessions peak here.
+Midday Reset — 13:00 to 14:00
+ Buffer for turnover, sanitization, staff reset.
+FlexShift B — 14:00 to 17:00
+ Follow-up and pediatric demand peak. Balanced load.
+Commute Gap — 17:00 to 19:00
+ Strategically bypassing Savar/CRP traffic and allowing therapist recovery.
+FlexShift C — 19:00 to 22:00
+ After-office accessibility. Express and Premium sessions perform strongly.
+FlexShift Z — 06:00 to 09:00 (Tier 3+)
+ Future phase early-morning block for athletes, schools, and specialty programs.
+
+3. Bed Capacity and Service Mix
+3.1 Standard Bed Allocation
+Neuro: 3
+
+MSK: 2
+
+Pediatrics: 2
+
+3.2 50 Percent Launch Capacity (Optional)
+Neuro: 2
+
+MSK: 1
+
+Pediatrics: 1
+
+This configuration supports 40 to 55 percent occupancy while minimizing early-month payroll strain.
+3.3 Clinical Session Types
+Foundation (60 minutes): Full assessment and complex cases
+
+Standard (30 to 45 minutes): Follow-up treatment
+
+Premium Recovery (60 minutes): Advanced combined sessions
+
+Express (15 to 20 minutes): High-throughput, evening-friendly model
+
+Baseline visit mix:
+ 20% Foundation, 50% Standard, 25% Premium, 5% Express
+
+4. Staffing Tier Framework
+FlexTime grows gradually using five staffing tiers. Each tier unlocks specific service capabilities and determines safe occupancy levels.
+Tier 0 — Minimum Viable Opening Team
+10 Full Time / 4 Part Time (Total 14)
+ Supports:
+50% bed capacity
+
+Basic coverage of A, B, and C shifts
+
+Tier 1 — Stable Launch Team
+14 Full Time / 7 Part Time (Total 21)
+ Supports:
+Reliable A, B, and C coverage
+
+Evening operations
+
+Early-stage stability
+
+Tier 2 — Baseline Full Operations (Original Staffing Design)
+17 Full Time / 9 Part Time (Total 26)
+ Supports:
+All 7 beds fully active
+
+Full FlexTime operations
+
+Floaters and backup redundancy
+
+CareBridge program
+
+60% performance target
+ This is the official baseline for Motion Mechanics.
+
+Tier 3 — Expanded Operations
+22 Full Time / 6 Part Time (Total 28)
+ Unlocks:
+FlexShift Z (06:00 to 09:00)
+
+Partial weekend service
+
+Basic home-care dispatch
+
+Increased throughput potential
+
+Tier 4 — Full Ecosystem Coverage
+27 Full Time / 11 Part Time (Total 38)
+ Unlocks:
+Full weekend operations (Saturday and Sunday)
+
+Full early-morning operations
+
+Dedicated home-care and on-call physiotherapist team
+
+Corporate outreach capacity
+
+Highest operational coverage
+
+
+5. Financial Model (High-Level)
+5.1 Key Assumptions
+22 standard working days per month (Tiers 0 to 2)
+
+Up to 28 working days with weekend coverage (Tiers 3 and 4)
+
+Up to 30 effective working days with hybrid home-care/online operations (Tier 4 advanced)
+
+Maximum daily revenue at 100% capacity: 137,305 BDT
+
+Weighted session distribution as defined in Section 3
+
+5.2 Expected Monthly Revenue by Tier
+Tier 0 (Approximately 30%): ~906,000 BDT
+
+Tier 1 (Approximately 45%): ~1,360,000 BDT
+
+Tier 2 (Approximately 60%): ~1,812,000 BDT
+
+Tier 3 (Approximately 75%): ~2,266,000 BDT
+
+Tier 4 (Approximately 90%): ~2,719,000 BDT
+
+Tier 4+ with weekend and home-care expansion: ~3,200,000 to ~3,500,000 BDT
+
+5.3 Monthly Payroll by Tier
+Tier 0: ~360,000 BDT
+
+Tier 1: ~750,000 BDT
+
+Tier 2: ~928,000 BDT
+
+Tier 3: ~1,050,000 BDT
+
+Tier 4: ~1,360,000 BDT
+
+5.4 Profit Characteristics
+Tier 0: Small planned early losses (normal during launch)
+
+Tier 1: Moderate profit emerging near 45% occupancy
+
+Tier 2: Strong profitability with 38–42% margin
+
+Tier 3: Margin expands through weekend and early-morning throughput
+
+Tier 4: Highest margin via extended operational calendar
+
+Detailed projections are available on the interactive FlexTime microsite.
+
+6. CareBridge Program
+CareBridge ensures affordability without compromising financial health.
+Purpose:
+ Support teachers, students, single parents, chronic-care patients, and NGO/community referrals.
+Structure:
+~8 subsidized Standard sessions per day
+
+30% discount
+
+Approximately 9% of daily capacity
+
+Fully supported operationally at Tier 2 and above
+
+Impact modeling is fully available through the microsite.
+
+7. Launch Strategy
+Phase 1 (Months 1 to 3)
+Optional 30% launch discount
+
+Staffing: Tier 0 to Tier 1
+
+Objectives: Patient onboarding, system stabilization, trust building
+
+Phase 2 (Months 4 to 6)
+20% discount
+
+Staffing: Tier 1 to Tier 2
+
+Objective: Grow to 45 to 55% occupancy
+
+Phase 3 (Months 7 to 12)
+Full pricing
+
+Staffing: Tier 2
+
+Objective: Sustainable 60% occupancy and operational consistency
+
+Year 2 and Beyond
+Scale to Tier 3 and Tier 4
+
+Introduce early mornings, weekends, home-care, and corporate partnerships
+
+
+8. Companion Interactive Microsite
+The FlexTime microsite provides:
+A staffing tier slider (Tier 0 to Tier 4)
+
+Payroll and FT/PT breakdown
+
+Occupancy simulation and revenue engine
+
+Profit margin visualization
+
+Launch scenario modeling
+
+CareBridge impact modeling
+
+Pricing and discount simulation
+
+Model assumptions transparency
+
+This document serves as the narrative foundation.
+ The microsite serves as the analytical engine.
+
+9. Conclusion
+FlexTime enables Motion Mechanics to function as a resilient, patient-aligned, therapist-friendly, and financially strong physiotherapy organization.
+It provides:
+A structured and sustainable daily rhythm
+
+A clear staffing pathway from launch to expansion
+
+A transparent financial model
+
+Affordable care pathways through CareBridge
+
+The flexibility to grow into morning, weekend, and home-care service lines
+
+Together, the document and companion microsite provide a complete operational blueprint for Motion Mechanics’ next phase.
+
+
+
+Tab 2

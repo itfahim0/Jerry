@@ -24,11 +24,11 @@ async function ingestAll() {
             if (file.startsWith('.')) continue; // Ignore hidden files like .gitkeep
 
             // Check if file is already in knowledge base
-            // A simple check by filename. For more robustness, we could use file hash or mtime.
-            if (knowledgeBase.hasDocument(file)) {
-                // console.log(`Skipping ${file} (already ingested)`);
-                continue;
-            }
+            // We now allow re-ingestion to support updates.
+            // if (knowledgeBase.hasDocument(file)) {
+            //     // console.log(`Skipping ${file} (already ingested)`);
+            //     continue;
+            // }
 
             console.log(`Ingesting new file: ${file}`);
 

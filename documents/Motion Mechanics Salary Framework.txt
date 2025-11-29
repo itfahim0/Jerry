@@ -1,0 +1,45 @@
+Tab 1
+
+
+Salary & Levels Framework
+
+1. Standard Salary Ladder
+This structure defines salaries for physiotherapists and supporting roles within Motion Mechanics. It is aligned with the universal designations of the Purrfect Universe and adapted to the local market. Our intent is to provide fair, competitive, and transparent compensation.
+Salaries are managed as "Planet Money" and are a primary component of the "People & welfare" expense category, which is funded directly from planet revenue.
+
+2. Salary and Sweat Equity Program
+In addition to their standard salary, employees in the early stages of a planet can participate in the Sweat Equity Program.
+Voluntary Investment: Employees can choose to invest a portion of their net salary to gain ownership in the planet.
+Planet Credits (PCs): This investment is recorded as Planet Credits (PCs), which represent a share of future profits.
+Living Standard Protection: A "Living Standard Protection" policy is in effect. If investing part of a salary leaves an employee with an income deemed too low to live safely, HR and the Council of Welfare must review and adjust the arrangement. No one should suffer financially for wanting to own a part of what they build.
+Reinvestment Option: Later, any recipient of profit redistribution may also choose to convert their share back into Planet Credits.
+3. Ceremonious Salary Policy
+This policy applies to founders, partners, and directors who are both personal investors and strategic leaders. It ensures a modest, symbolic salary that covers basic living needs while keeping true rewards tied to long-term success.
+Amount: Capped at 50,000 BDT/month (symbolic but useful).
+Applies to: Founders and leaders (e.g., Robin, Mamun, Arafat).
+Separation: This salary is separate from returns on investment (profit share, dividends).
+Review: Reviewed annually by the Council of the Universe.
+Spirit: Sacrifice & alignment, motivation beyond salary, transparency.
+4. Distinction from Profit & Surplus Rewards
+It is important to distinguish this salary framework (paid from revenue) from rewards paid out of profit (money left after all costs) and surplus (profit above the 5% limit).
+Use of Normal Profit (Up to 5%): A portion of the standard 5% profit is designated for "Employee Well-being," which can include bonuses, training, rest, and care.
+Use of Surplus Profit (Above 5%): Surplus profit is redistributed according to Article XV-B, including:
+30% for Employee Rewards: Distributed as bonuses or Planet Credit top-ups for active contributors.
+10% for Founders and Leaders: A leadership bonus that is capped at 2× the median employee reward.
+
+5. Salary Scaling with Experience & Professional Development
+Within each level, salaries may scale upwards based on years of service, skill depth, and clinical outcomes.
+Employees who earn certifications, specializations, or higher academic degrees are eligible for accelerated progression or fast-tracking.
+Annual development reviews will consider training, growth, and contributions.
+Longevity incentives (loyalty bonuses or scaled raises) are provided at 2, 5, and 10-year milestones.
+6. Discretionary Salary Overrides (Empathy Clause)
+This framework is grounded in compassion. In exceptional personal circumstances (e.g., catastrophic financial struggles, severe personal or family sickness, or unexpected crises), discretionary overrides may apply.
+Funding Source: This support is a primary purpose of the Universal Support Pool (USP) established in Article X , which is specifically designed to "provide emergency financial aid for employees or families".
+Governance: The Council of the Universe, in coordination with HR, may approve temporary or permanent salary overrides above the standard framework.
+Review: These decisions will be transparent, empathy-driven, and revisitable after a set period.
+Together, the Standard Salary Ladder, Sweat Equity Program, Ceremonious Salary Policy, clear profit distinctions, Salary Scaling provisions, and the Empathy Clause create a holistic framework for fairness, growth, and compassion within Motion Mechanics — Purrfect Universe Council .
+
+Tab 2
+New pt- reception- name, mobile, address, age, gender, patient id, billing information (appointed & registration)
+Consultation-  bill depend on time-  short form of assessment (history , short diagnosis, )
+Personal physio- full form assessment (disease specified)
