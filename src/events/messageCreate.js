@@ -2,6 +2,7 @@ const { Events, EmbedBuilder, ChannelType } = require('discord.js');
 const { getChatResponse } = require('../openaiClient');
 const knowledgeBase = require('../services/knowledgeBase');
 const { getSession, addMessageToSession } = require('../utils/sessionMemory');
+const systemPrompt = require('../systemPrompt');
 
 module.exports = {
     name: Events.MessageCreate,
@@ -78,7 +79,7 @@ module.exports = {
                 const messages = [];
 
                 // System Prompt Configuration
-                let systemContent = "You are Jerry, a friendly Bengali-speaking AI assistant for the 'Purrfect Universe' community.";
+                let systemContent = systemPrompt;
 
                 // --- Smart Mentions & Role Context ---
                 if (message.guild) {
