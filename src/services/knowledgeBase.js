@@ -98,7 +98,8 @@ class KnowledgeBase {
                     text: chunk,
                     source: source,
                     embedding: embedding,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    type: 'document'
                 });
             }
         }
@@ -107,11 +108,33 @@ class KnowledgeBase {
         console.log(`Added document: ${source}`);
     }
 
-    async search(query, limit = 3) {
+    async addChatLog(message) {
+        // Only store messages longer than 10 characters to save space/noise
+        if (message.content.length < 10) return;
+
+        const embedding = await this.getEmbedding(message.content);
+        if (embedding) {
+            this.data.push({
+                id: uuidv4(),
+                text: message.content,
+                source: `chat:${message.channel.id}`,
+                authorId: message.author.id,
+                authorName: message.author.username,
+                channelId: message.channel.id,
+                embedding: embedding,
+                timestamp: new Date().toISOString(),
+                type: 'chat'
+            });
+            this.save();
+            // console.log(`Logged chat message from ${message.author.username}`);
+        }
+    }
+
+    async search(query, limit = 5, userMember = null) {
         const queryEmbedding = await this.getEmbedding(query);
         if (!queryEmbedding) return [];
 
-        const results = this.data.map(entry => {
+        let results = this.data.map(entry => {
             return {
                 ...entry,
                 score: similarity(queryEmbedding, entry.embedding)
@@ -122,7 +145,22 @@ class KnowledgeBase {
         results.sort((a, b) => b.score - a.score);
 
         // Filter for relevant results (e.g., score > 0.3)
-        return results.filter(r => r.score > 0.3).slice(0, limit);
+        results = results.filter(r => r.score > 0.3);
+
+        // Permission Check for Chat Logs
+        if (userMember) {
+            results = results.filter(entry => {
+                if (entry.type === 'chat') {
+                    // Check if user has permission to view the channel
+                    const channel = userMember.guild.channels.cache.get(entry.channelId);
+                    if (!channel) return false; // Channel deleted or not found
+                    return channel.permissionsFor(userMember).has('ViewChannel');
+                }
+                return true; // Documents are public
+            });
+        }
+
+        return results.slice(0, limit);
     }
 
     hasDocument(source) {
