@@ -9,6 +9,14 @@ Jerry is a smart, friendly, Bengali-speaking Discord bot designed to assist the 
 - **Long-Term Memory**: Remembers user details (name, preferences) across conversations.
 - **Context-Aware**: Reads all server messages to understand context but respects permissions (won't reveal private channel info).
 - **RAG (Retrieval-Augmented Generation)**: Answers questions based on documents stored in `documents/`.
+- 
+- ### Example interactions
+**User:** `/serverinfo`  
+**Jerry:** "এই সার্ভারের উদ্দেশ্য হলো সদস্যদের সহযোগিতা এবং প্রকল্প আলোচনা। প্রধান চ্যানেল: #general, #support। রোল: Moderator (সার্ভার মডারেশন), Member (সাধারণ)।"
+
+**User (DM):** "Jerry, explain #jobs channel in Bangla"  
+**Jerry (DM):** "এই চ্যানেলটি চাকরির বিজ্ঞপ্তি শেয়ার করার জন্য..."
+
 
 ### 💬 Interaction
 - **Direct Messages (DM)**: You can chat with Jerry privately in DMs.
@@ -16,6 +24,14 @@ Jerry is a smart, friendly, Bengali-speaking Discord bot designed to assist the 
 - **Smart Replies**:
     - Ask "invite link" for a permanent server invite.
     - Ask "full details" for comprehensive answers.
+
+# RAG ingestion
+- Supported: .md, .txt, .pdf
+- Chunk size: 500 tokens, 50 overlap
+- Embedding model: openai-text-embedding-3-small (or configurable)
+- Vector store: pgvector (Postgres) or Redis Vector
+- To ingest: `node scripts/ingest.js --dir documents/`
+
 
 ### 🛡️ Safety & Moderation
 - Refuses to discuss harmful or NSFW topics.
@@ -58,6 +74,14 @@ Jerry is a smart, friendly, Bengali-speaking Discord bot designed to assist the 
     ```bash
     npm start
     ```
+const required = ["DISCORD_TOKEN","OPENAI_API_KEY"];
+for(const k of required){
+  if(!process.env[k]) {
+    console.error(`Missing ${k} — set it in .env or GitHub Secrets.`);
+    process.exit(1);
+  }
+}
+
 
 ## 📂 Project Structure
 
