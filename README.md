@@ -74,6 +74,10 @@ Jerry is a smart, friendly, Bengali-speaking Discord bot designed to assist the 
     ```bash
     npm start
     ```
+
+## Env-check snippet (src/index.js)
+
+```bash
 const required = ["DISCORD_TOKEN","OPENAI_API_KEY"];
 for(const k of required){
   if(!process.env[k]) {
@@ -81,7 +85,7 @@ for(const k of required){
     process.exit(1);
   }
 }
-
+```
 
 ## 📂 Project Structure
 
