@@ -1,63 +1,88 @@
 # Jerry - The Friendly Bengali AI Bot
 
-Jerry is a Discord bot designed to be a friendly, Bengali-speaking companion. He can chat casually, provide server information, and explain technical concepts in an easy-to-understand way.
+Jerry is a smart, friendly, Bengali-speaking Discord bot designed to assist the "Purrfect Universe" community. He uses OpenAI for intelligence and maintains a persistent memory of conversations.
 
-## Features
+## 🌟 Key Features
 
-- **Friendly Chat**: Converses in Bengali (with some English mix) in a casual, supportive tone.
-- **Server Info**: Can explain the purpose of the server, channels, and roles.
-- **Technical Explanations**: Capable of explaining code structures, architectures, and designs.
-- **Safety**: Refuses to engage in harmful or NSFW topics.
+### 🧠 Intelligence & Memory
+- **Bengali Persona**: Chats naturally in Bengali (with English mix).
+- **Long-Term Memory**: Remembers user details (name, preferences) across conversations.
+- **Context-Aware**: Reads all server messages to understand context but respects permissions (won't reveal private channel info).
+- **RAG (Retrieval-Augmented Generation)**: Answers questions based on documents stored in `documents/`.
 
-## Setup
+### 💬 Interaction
+- **Direct Messages (DM)**: You can chat with Jerry privately in DMs.
+- **Mentions**: Jerry understands and can use mentions for Users (`<@id>`), Channels (`<#id>`), and Roles (`<@&id>`).
+- **Smart Replies**:
+    - Ask "invite link" for a permanent server invite.
+    - Ask "full details" for comprehensive answers.
 
-1.  **Clone the repository.**
-2.  **Install dependencies:**
+### 🛡️ Safety & Moderation
+- Refuses to discuss harmful or NSFW topics.
+- Respects channel permissions (ViewChannel) before sharing information from chat logs.
+
+## 🚀 Setup Guide
+
+### Prerequisites
+- Node.js (v16.9.0 or higher)
+- A Discord Bot Token (with Message Content Intent enabled)
+- An OpenAI API Key
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/itfahim0/Jerry.git
+    cd Jerry
+    ```
+
+2.  **Install dependencies**
     ```bash
     npm install
     ```
-3.  **Configure Environment:**
-    - Rename `.env.example` (if provided) or create a `.env` file.
-    - Add your `DISCORD_TOKEN`, `CLIENT_ID`, and `OPENAI_API_KEY`.
-4.  **Deploy Commands:**
+
+3.  **Configure Environment**
+    Create a `.env` file in the root directory:
+    ```env
+    DISCORD_TOKEN=your_discord_bot_token
+    CLIENT_ID=your_discord_client_id
+    OPENAI_API_KEY=your_openai_api_key
+    ```
+
+4.  **Deploy Slash Commands**
     ```bash
     npm run deploy
     ```
-5.  **Start the Bot:**
+
+5.  **Start the Bot**
     ```bash
     npm start
     ```
 
-## Project Structure
+## 📂 Project Structure
 
-- `src/`: Source code
-  - `commands/`: Slash commands
-  - `events/`: Event handlers
-  - `utils/`: Utility functions
-  - `services/`: RAG and logic services
-- `documents/`: Knowledge base files (PDF, DOCX, TXT, MD)
-- `config/`: Configuration files
-- `scripts/`: Deployment scripts
+- `src/`
+  - `commands/`: Slash commands (e.g., `/serverinfo`, `/help`)
+  - `events/`: Event handlers (`messageCreate`, `ready`, etc.)
+  - `services/`: Core logic (`knowledgeBase`, `documentIngestion`)
+  - `utils/`: Helpers (`sessionMemory`)
+- `documents/`: Place `.txt`, `.pdf`, or `.docx` files here for Jerry to learn from.
+- `data/`: Stores persistent memory (`conversations.json`, `knowledge.json`).
 
-## New Features (RAG & Utilities)
+## 🛠️ Production Deployment
 
-- **Knowledge Base**: Jerry learns from files in the `documents/` folder.
-- **Smart Answers**: 
-  - Ask "Tell me about the server" for a concise summary.
-  - Ask "Tell me full details" for a comprehensive explanation.
-- **Invite Links**: Ask "invite link", "link dao", or "server link" to get a permanent invite.
-- **Link Retrieval**: Ask for specific website links (e.g., "Purrfect Universe link") to get them from `documents/links.md`.
-
-## Production Deployment (PM2)
-
-To run the bot continuously in production:
+Use PM2 to keep the bot running 24/7:
 
 ```bash
+# Start the bot
 npm run start:pm2
+
+# View logs
+pm2 logs jerry-bot
+
+# Stop the bot
+pm2 stop jerry-bot
 ```
 
-Useful PM2 commands:
-- `pm2 status`: Check bot status
-- `pm2 logs jerry-bot`: View logs
-- `pm2 restart jerry-bot`: Restart the bot
-
+## 📝 License
+This project is licensed under the ISC License.
