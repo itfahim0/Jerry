@@ -87,11 +87,49 @@ module.exports = {
                     history = recentContext;
                 }
 
+                // --- 3. Immediate Context (Recent Channel History) ---
+                // Fetch last 20 messages to get context of the current conversation
+                let immediateContext = "";
+                if (message.channel && !isDM) {
+                    try {
+                        const recentMessages = await message.channel.messages.fetch({ limit: 20 });
+                        const today = new Date().toDateString();
+
+                        const relevantMessages = recentMessages.filter(m => {
+                            // Filter 1: Must be from today
+                            const msgDate = m.createdAt.toDateString();
+                            if (msgDate !== today) return false;
+
+                            // Filter 2: Exclude the current message itself (to avoid duplication)
+                            if (m.id === message.id) return false;
+
+                            // Filter 3: Exclude bot messages (optional, but keeps context cleaner)
+                            // if (m.author.bot) return false; 
+
+                            return true;
+                        });
+
+                        if (relevantMessages.size > 0) {
+                            // Sort by time (oldest first)
+                            const sortedMessages = Array.from(relevantMessages.values()).reverse();
+                            immediateContext = sortedMessages.map(m => `${m.author.username}: ${m.content}`).join("\n");
+                        }
+                    } catch (err) {
+                        console.error("Error fetching immediate context:", err);
+                    }
+                }
+
                 // Construct message payload
                 const messages = [];
 
                 // System Prompt Configuration
                 let systemContent = systemPrompt;
+
+                // Append Immediate Context
+                if (immediateContext) {
+                    systemContent += `\n\nRecent Chat History (Today):\n${immediateContext}\n`;
+                    systemContent += "Use this history to understand the immediate context of the conversation (who said what just now).\n";
+                }
 
                 // --- Smart Mentions & Role Context ---
                 if (message.guild) {
@@ -156,8 +194,18 @@ module.exports = {
                     messages.push({ role: "user", content: userMessage });
                 }
 
+                // --- 4. Vision (Image Handling) ---
+                let imageUrl = null;
+                if (message.attachments.size > 0) {
+                    const attachment = message.attachments.first();
+                    if (attachment.contentType && attachment.contentType.startsWith('image/')) {
+                        imageUrl = attachment.url;
+                        console.log("Image detected:", imageUrl);
+                    }
+                }
+
                 // Get Response
-                const response = await getChatResponse(messages);
+                const response = await getChatResponse(messages, imageUrl);
 
                 // Save to History (only for direct interactions)
                 if (!shouldInterject) {
