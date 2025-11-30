@@ -1,8 +1,10 @@
 const { Events, EmbedBuilder, ChannelType } = require('discord.js');
-const { getChatResponse, transcribeAudio } = require('../openaiClient');
+const { getChatResponse } = require('../openaiClient');
 const knowledgeBase = require('../services/knowledgeBase');
 const { getSession, addMessageToSession } = require('../utils/sessionMemory');
 const systemPrompt = require('../systemPrompt');
+const { generateThreadSummary } = require('../services/summaryService');
+const { handleVoiceMessage } = require('../services/voiceService');
 
 module.exports = {
     name: Events.MessageCreate,
@@ -30,23 +32,20 @@ module.exports = {
                 const userId = message.author.id;
                 const lowerMessage = userMessage.toLowerCase();
 
-                // --- Audio Handling ---
-                let audioTranscription = null;
-                const audioAttachment = message.attachments.find(a => a.contentType && a.contentType.startsWith('audio/'));
-                if (audioAttachment) {
-                    console.log("Audio detected, transcribing...");
-                    audioTranscription = await transcribeAudio(audioAttachment.url);
-                    if (audioTranscription) {
-                        console.log("Transcription:", audioTranscription);
-                        userMessage += `\n[User sent an audio file. Transcription: "${audioTranscription}"]`;
-                    } else {
-                        userMessage += `\n[User sent an audio file, but transcription failed.]`;
-                    }
+                // --- Audio Handling (Service) ---
+                const voiceResponse = await handleVoiceMessage(message);
+                if (voiceResponse) {
+                    userMessage += voiceResponse;
                 }
 
                 // If it was just an attachment with no text and not mentioned, we should still process if it's DM or if we decided to interject (or if it's an audio/image that needs analysis)
-                if (!isMentioned && !isDM && !shouldInterject && message.attachments.size > 0 && !audioTranscription) {
-                    if (audioAttachment) {
+                if (!isMentioned && !isDM && !shouldInterject && message.attachments.size > 0 && !voiceResponse) {
+                    // If it's just an image/file in a public channel without mention, ignore it (unless interject logic triggered)
+                    // But if we transcribed audio, we assume they want a reply? Maybe not.
+                    // Let's be safe: Only reply to attachments if mentioned, DM, or interject logic.
+                    // BUT, the user explicitly asked for "Voice -> Bangla Chat Conversion".
+                    // If I send a voice note, I expect a reply.
+                    if (voiceResponse) {
                         // Treat audio as a direct interaction
                     } else {
                         return; // Ignore random images unless mentioned
@@ -76,50 +75,24 @@ module.exports = {
                     }
                 }
 
-                // --- 2. Auto Thread Summary Logic (Chat Trigger) ---
+                // --- 2. Auto Thread Summary Logic (Service) ---
                 const summaryKeywords = ['summary', 'sar-songkhep', 'summary dao', 'give me summary', 'discussion summary'];
                 if ((isMentioned || isDM) && summaryKeywords.some(k => lowerMessage.includes(k))) {
-                    try {
-                        const limit = 50;
-                        const messages = await message.channel.messages.fetch({ limit: limit });
+                    return await generateThreadSummary(message);
+                }
 
-                        if (messages.size > 0) {
-                            const sortedMessages = Array.from(messages.values()).reverse();
-                            const conversationText = sortedMessages.map(m => `${m.author.username}: ${m.content}`).join('\n');
-
-                            const summaryPrompt = `
-নিচের কথোপকথনটি সারসংক্ষেপ (Summarize) করো।
-"AUTO THREAD SUMMARY" মডিউল ব্যবহার করো।
-
-ফরম্যাট:
-**মূল পয়েন্ট**
-...
-**গুরুত্বপূর্ণ আলোচনা**
-...
-**নির্ণয় / সিদ্ধান্ত**
-...
-**পরবর্তী Step**
-...
-
-কথোপকথন:
-${conversationText}
-                            `;
-
-                            // Send directly to OpenAI with this specific prompt
-                            const aiResponse = await getChatResponse([{ role: "user", content: summaryPrompt }]);
-
-                            const embed = new EmbedBuilder()
-                                .setColor(0x00AA00)
-                                .setTitle('📝 আলোচনার সারসংক্ষেপ (Thread Summary)')
-                                .setDescription(aiResponse)
-                                .setFooter({ text: 'Jerry - Auto Thread Summary' })
-                                .setTimestamp();
-
-                            return message.reply({ embeds: [embed] });
+                // --- 2.5 Learning Mode (Admin Only) ---
+                if (lowerMessage.startsWith('jerry learn:') || lowerMessage.startsWith('jerry shikho:')) {
+                    if (message.member && message.member.permissions.has('Administrator')) {
+                        const contentToLearn = message.content.replace(/jerry (learn|shikho):/i, '').trim();
+                        if (contentToLearn.length > 10) {
+                            await knowledgeBase.addDocument(contentToLearn, `learned_from_chat_${Date.now()}`);
+                            return message.reply("ধন্যবাদ! আমি এই তথ্যটি শিখে নিয়েছি। (Added to Knowledge Base)");
+                        } else {
+                            return message.reply("তথ্যটি খুব ছোট। দয়া করে বিস্তারিত লিখুন।");
                         }
-                    } catch (err) {
-                        console.error("Error generating summary:", err);
-                        return message.reply("দুঃখিত, সারসংক্ষেপ তৈরি করতে সমস্যা হয়েছে।");
+                    } else {
+                        return message.reply("দুঃখিত, আমাকে শেখানোর অনুমতি শুধুমাত্র অ্যাডমিনদের আছে।");
                     }
                 }
 
@@ -128,7 +101,7 @@ ${conversationText}
                 // Search knowledge base (RAG)
                 // Only search if mentioned or DM, or if interjecting and message is long enough
                 let contextText = "";
-                if (isMentioned || isDM || userMessage.length > 10 || audioTranscription) {
+                if (isMentioned || isDM || userMessage.length > 10 || voiceResponse) {
                     // Pass message.member to check permissions for chat logs
                     const contextResults = await knowledgeBase.search(userMessage, 5, message.member);
                     if (contextResults.length > 0) {
@@ -206,24 +179,29 @@ ${conversationText}
                     // 1. Channel & Role Structure
                     const channels = message.guild.channels.cache
                         .filter(c => c.type === ChannelType.GuildText)
-                        .map(c => `${c.name} (ID: ${c.id})`)
+                        .map(c => {
+                            let info = `${c.name} (ID: ${c.id})`;
+                            if (c.topic) info += ` - Desc: ${c.topic.substring(0, 50)}...`; // Add channel topic/description
+                            return info;
+                        })
                         .slice(0, 20) // Limit to avoid token overflow
-                        .join(", ");
+                        .join("\n");
 
                     const roles = message.guild.roles.cache
                         .map(r => `${r.name} (ID: ${r.id})`)
                         .slice(0, 20)
                         .join(", ");
 
-                    systemContent += `\n\nServer Structure:\nChannels: ${channels}\nRoles: ${roles}\n`;
+                    systemContent += `\n\nServer Structure:\nChannels:\n${channels}\nRoles: ${roles}\n`;
                     systemContent += "To mention a channel, use <#channelID>. To mention a role, use <@&roleID>. Use these IDs when referring to specific channels or roles.\n";
+                    systemContent += "Use the 'Desc' (Topic) of channels to explain their purpose if asked.\n";
 
                     // 2. User Role Context
                     const member = message.member;
                     if (member) {
                         const userRoles = member.roles.cache.map(r => r.name).join(', ');
                         const isAdmin = member.permissions.has('Administrator');
-                        systemContent += `\nUser Context:\nThe user asking this is ${message.author.username}.\nTheir Roles: ${userRoles}\nIs Admin: ${isAdmin}\n`;
+                        systemContent += `\nUser Context:\nThe user asking this is ${message.author.username} (ID: ${message.author.id}).\nTheir Roles: ${userRoles}\nIs Admin: ${isAdmin}\n`;
                         systemContent += "Tailor your answer based on their permissions. If they are an Admin, acknowledge their authority.\n";
                     }
                 }
