@@ -1,5 +1,5 @@
 const { Events, EmbedBuilder, ChannelType } = require('discord.js');
-const { getChatResponse } = require('../openaiClient');
+const { getChatResponse, transcribeAudio } = require('../openaiClient');
 const knowledgeBase = require('../services/knowledgeBase');
 const { getSession, addMessageToSession } = require('../utils/sessionMemory');
 const systemPrompt = require('../systemPrompt');
@@ -22,13 +22,36 @@ module.exports = {
             knowledgeBase.addChatLog(message).catch(err => console.error("Error logging chat:", err));
         }
 
-        if (isMentioned || isDM || shouldInterject) {
+        if (isMentioned || isDM || shouldInterject || message.attachments.size > 0) {
             try {
                 await message.channel.sendTyping();
 
-                const userMessage = message.content.replace(/<@!?[0-9]+>/g, '').trim();
+                let userMessage = message.content.replace(/<@!?[0-9]+>/g, '').trim();
                 const userId = message.author.id;
                 const lowerMessage = userMessage.toLowerCase();
+
+                // --- Audio Handling ---
+                let audioTranscription = null;
+                const audioAttachment = message.attachments.find(a => a.contentType && a.contentType.startsWith('audio/'));
+                if (audioAttachment) {
+                    console.log("Audio detected, transcribing...");
+                    audioTranscription = await transcribeAudio(audioAttachment.url);
+                    if (audioTranscription) {
+                        console.log("Transcription:", audioTranscription);
+                        userMessage += `\n[User sent an audio file. Transcription: "${audioTranscription}"]`;
+                    } else {
+                        userMessage += `\n[User sent an audio file, but transcription failed.]`;
+                    }
+                }
+
+                // If it was just an attachment with no text and not mentioned, we should still process if it's DM or if we decided to interject (or if it's an audio/image that needs analysis)
+                if (!isMentioned && !isDM && !shouldInterject && message.attachments.size > 0 && !audioTranscription) {
+                    if (audioAttachment) {
+                        // Treat audio as a direct interaction
+                    } else {
+                        return; // Ignore random images unless mentioned
+                    }
+                }
 
                 // --- 1. Invite Link Logic (Only if explicitly mentioned or DM) ---
                 if (isMentioned || isDM) {
@@ -53,12 +76,59 @@ module.exports = {
                     }
                 }
 
-                // --- 2. RAG & Chat Logic ---
+                // --- 2. Auto Thread Summary Logic (Chat Trigger) ---
+                const summaryKeywords = ['summary', 'sar-songkhep', 'summary dao', 'give me summary', 'discussion summary'];
+                if ((isMentioned || isDM) && summaryKeywords.some(k => lowerMessage.includes(k))) {
+                    try {
+                        const limit = 50;
+                        const messages = await message.channel.messages.fetch({ limit: limit });
+
+                        if (messages.size > 0) {
+                            const sortedMessages = Array.from(messages.values()).reverse();
+                            const conversationText = sortedMessages.map(m => `${m.author.username}: ${m.content}`).join('\n');
+
+                            const summaryPrompt = `
+নিচের কথোপকথনটি সারসংক্ষেপ (Summarize) করো।
+"AUTO THREAD SUMMARY" মডিউল ব্যবহার করো।
+
+ফরম্যাট:
+**মূল পয়েন্ট**
+...
+**গুরুত্বপূর্ণ আলোচনা**
+...
+**নির্ণয় / সিদ্ধান্ত**
+...
+**পরবর্তী Step**
+...
+
+কথোপকথন:
+${conversationText}
+                            `;
+
+                            // Send directly to OpenAI with this specific prompt
+                            const aiResponse = await getChatResponse([{ role: "user", content: summaryPrompt }]);
+
+                            const embed = new EmbedBuilder()
+                                .setColor(0x00AA00)
+                                .setTitle('📝 আলোচনার সারসংক্ষেপ (Thread Summary)')
+                                .setDescription(aiResponse)
+                                .setFooter({ text: 'Jerry - Auto Thread Summary' })
+                                .setTimestamp();
+
+                            return message.reply({ embeds: [embed] });
+                        }
+                    } catch (err) {
+                        console.error("Error generating summary:", err);
+                        return message.reply("দুঃখিত, সারসংক্ষেপ তৈরি করতে সমস্যা হয়েছে।");
+                    }
+                }
+
+                // --- 3. RAG & Chat Logic ---
 
                 // Search knowledge base (RAG)
                 // Only search if mentioned or DM, or if interjecting and message is long enough
                 let contextText = "";
-                if (isMentioned || isDM || userMessage.length > 10) {
+                if (isMentioned || isDM || userMessage.length > 10 || audioTranscription) {
                     // Pass message.member to check permissions for chat logs
                     const contextResults = await knowledgeBase.search(userMessage, 5, message.member);
                     if (contextResults.length > 0) {
@@ -87,7 +157,7 @@ module.exports = {
                     history = recentContext;
                 }
 
-                // --- 3. Immediate Context (Recent Channel History) ---
+                // --- 4. Immediate Context (Recent Channel History) ---
                 // Fetch last 20 messages to get context of the current conversation
                 let immediateContext = "";
                 if (message.channel && !isDM) {
@@ -167,15 +237,7 @@ module.exports = {
                     systemContent += "Instructions:\n";
                     systemContent += "1. STRICTLY use ONLY the provided context to answer the query. Do NOT use outside knowledge about the server.\n";
                     systemContent += "2. If the answer is not in the context, explicitly say: 'I do not have that information in my documents.'\n";
-
-                    if (isDetailed) {
-                        systemContent += "3. Provide a comprehensive and detailed answer based on the context.\n";
-                    } else {
-                        systemContent += "3. Keep your answer short and concise (2-3 sentences) unless the user explicitly asks for details.\n";
-                    }
-
-                    systemContent += "4. Answer in the same language as the user (Bengali or English).\n";
-                    systemContent += "5. If the user asks for a specific link (e.g. website), provide the URL exactly as shown in the context.\n";
+                    systemContent += "3. If the user asks for a specific link (e.g. website), provide the URL exactly as shown in the context.\n";
                 } else {
                     systemContent += "\nI do not have specific context for this query. Answer generally if it's casual chat. If asked about the server/rules/info and you don't have context, say 'I don't have that info right now'.";
                 }

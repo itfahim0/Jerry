@@ -1,6 +1,9 @@
 const OpenAI = require("openai");
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 require('dotenv').config();
-const systemPrompt = require('./systemPrompt');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -31,15 +34,11 @@ async function getChatResponse(messages, imageUrl = null) {
             }
         }
 
-        const conversation = [
-            { role: "system", content: systemPrompt },
-            ...finalMessages
-        ];
-
+        // We rely on the caller to provide the system prompt in the messages array
         const completion = await openai.chat.completions.create({
-            messages: conversation,
+            messages: finalMessages,
             model: "gpt-4o-mini", // Supports vision
-            max_tokens: 500,
+            max_tokens: 800,
         });
 
         return completion.choices[0].message.content;
@@ -49,4 +48,24 @@ async function getChatResponse(messages, imageUrl = null) {
     }
 }
 
-module.exports = { getChatResponse };
+async function transcribeAudio(audioUrl) {
+    try {
+        const response = await axios.get(audioUrl, { responseType: 'arraybuffer' });
+        const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.mp3`);
+        fs.writeFileSync(tempFilePath, response.data);
+
+        const transcription = await openai.audio.transcriptions.create({
+            file: fs.createReadStream(tempFilePath),
+            model: "whisper-1",
+            language: "bn", // Hint for Bengali, though it auto-detects
+        });
+
+        fs.unlinkSync(tempFilePath); // Cleanup
+        return transcription.text;
+    } catch (error) {
+        console.error("Audio Transcription Error:", error);
+        return null;
+    }
+}
+
+module.exports = { getChatResponse, transcribeAudio };
